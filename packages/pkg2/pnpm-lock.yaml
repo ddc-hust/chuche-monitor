@@ -1,0 +1,10 @@
+lockfileVersion: '6.0'
+
+settings:
+  autoInstallPeers: true
+  excludeLinksFromLockfile: false
+
+dependencies:
+  '@chuche-monitor/pkg1':
+    specifier: workspace:^
+    version: link:../pkg1
