@@ -1,6 +1,7 @@
 import fs from 'fs';
 import path from 'path';
 import typescript from 'rollup-plugin-typescript2';
+import json from '@rollup/plugin-json';
 const packagesDir = path.resolve(__dirname, 'packages');
 const packageFiles = fs.readdirSync(packagesDir);
 function output(path) {
@@ -23,7 +24,8 @@ function output(path) {
                         }
                     },
                     useTsconfigDeclarationDir: true
-                })
+                }),
+                json(),
             ]
         }
     ];

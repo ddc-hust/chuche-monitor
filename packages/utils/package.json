@@ -1,6 +1,6 @@
 {
-  "name": "@chuche-monitor/pkg1",
-  "version": "1.1.0",
+  "name": "@chuche-monitor/utils",
+  "version": "1.0.0",
   "description": "",
   "main": "src/index.js",
   "publishConfig": {
@@ -12,5 +12,9 @@
   },
   "keywords": [],
   "author": "",
-  "license": "ISC"
+  "license": "ISC",
+  "dependencies": {
+    "@chuche-monitor/common": "workspace:^",
+    "@chuche-monitor/types": "workspace:^"
+  }
 }
