@@ -138,7 +138,7 @@
   })(STATUS_CODE || (STATUS_CODE = {}));
 
   var name = "@chuche-monitor/core";
-  var version = "1.1.0";
+  var version = "1.1.2";
   var description = "";
   var main = "src/index.js";
   var publishConfig = {
@@ -512,6 +512,7 @@
       setFlag(handler.type, true);
       handlers[handler.type] = handlers[handler.type] || [];
       (_a = handlers[handler.type]) === null || _a === void 0 ? void 0 : _a.push(handler.callback);
+      console.log("订阅事件");
       return true;
   }
   function notify(type, data) {
@@ -519,6 +520,7 @@
       if (!type || !handlers[type])
           return;
       // 获取对应事件的回调函数并执行，回调函数为addReplaceHandler事件中定义的事件
+      console.log("通知事件的执行");
       (_a = handlers[type]) === null || _a === void 0 ? void 0 : _a.forEach(function (callback) {
           nativeTryCatch(function () {
               callback(data);
@@ -555,6 +557,289 @@
       }
   }
 
+  /**
+   * 检测页面是否白屏
+   * @param {function} callback - 回到函数获取检测结果
+   * @param {boolean} skeletonProject - 页面是否有骨架屏
+   * @param {array} whiteBoxElements - 容器列表，默认值为['html', 'body', '#app', '#root']
+   */
+  function openWhiteScreen(callback, _a) {
+      // let _whiteLoopNum = 0;
+      var skeletonProject = _a.skeletonProject, whiteBoxElements = _a.whiteBoxElements;
+      // 项目有骨架屏
+      if (skeletonProject) {
+          if (document.readyState != 'complete') {
+              idleCallback();
+          }
+      }
+      else {
+          // 页面加载完毕
+          if (document.readyState === 'complete') {
+              idleCallback(); // 页面加载完之后（页面和子资源加载完成，不包括动态资源）进行采样
+          }
+          else {
+              _global.addEventListener('load', idleCallback);
+          }
+      }
+      // 选中dom点的名称
+      function getSelector(element) {
+          if (element.id) {
+              return '#' + element.id;
+          }
+          else if (element.className) {
+              // div home => div.home
+              return ('.' +
+                  element.className
+                      .split(' ')
+                      .filter(function (item) { return !!item; })
+                      .join('.'));
+          }
+          else {
+              return element.nodeName.toLowerCase();
+          }
+      }
+      // 判断采样点是否为容器节点
+      function isContainer(element) {
+          var selector = getSelector(element);
+          // if (skeletonProject) {
+          //   _whiteLoopNum ? _skeletonNowList.push(selector) : _skeletonInitList.push(selector);
+          // }
+          return (whiteBoxElements === null || whiteBoxElements === void 0 ? void 0 : whiteBoxElements.indexOf(selector)) != -1;
+      }
+      // 采样对比
+      function sampling() {
+          var emptyPoints = 0;
+          for (var i = 1; i <= 9; i++) {
+              var xElements = document.elementsFromPoint((_global.innerWidth * i) / 10, _global.innerHeight / 2);
+              var yElements = document.elementsFromPoint(_global.innerWidth / 2, (_global.innerHeight * i) / 10);
+              if (isContainer(xElements[0]))
+                  emptyPoints++;
+              // 中心点只计算一次
+              if (i != 5) {
+                  if (isContainer(yElements[0]))
+                      emptyPoints++;
+              }
+          }
+          // console.log('_skeletonInitList', _skeletonInitList, _skeletonNowList);
+          // 页面正常渲染，停止轮训
+          if (emptyPoints != 17) {
+              // if (skeletonProject) {
+              //   // 第一次不比较
+              //   if (!_whiteLoopNum) return openWhiteLoop();
+              //   // 比较前后dom是否一致
+              //   if (_skeletonNowList.join() == _skeletonInitList.join())
+              //     return callback({
+              //       status: STATUS_CODE.ERROR,
+              //     });
+              // }
+              if (_support._loopTimer) {
+                  clearTimeout(_support._loopTimer);
+                  _support._loopTimer = null;
+              }
+          }
+          else {
+              // 开启轮训
+              if (!_support._loopTimer) {
+                  openWhiteLoop();
+              }
+          }
+          console.log("***********888888");
+          console.log(emptyPoints);
+          // 17个点都是容器节点算作白屏
+          callback({
+              status: emptyPoints == 17 ? STATUS_CODE.ERROR : STATUS_CODE.OK,
+          });
+      }
+      // 开启白屏轮训
+      function openWhiteLoop() {
+          if (_support._loopTimer)
+              return;
+          _support._loopTimer = setInterval(function () {
+              // if (skeletonProject) {
+              //   _whiteLoopNum++;
+              //   _skeletonNowList = [];
+              // }
+              idleCallback();
+          }, 1000);
+      }
+      function idleCallback() {
+          // if ('requestIdleCallback' in _global) {
+          //   requestIdleCallback(deadline => {
+          //     // timeRemaining：表示当前空闲时间的剩余时间
+          //     if (deadline.timeRemaining() > 0) {
+          //       sampling();
+          //     }
+          //   });
+          // } else {
+          //   sampling();
+          // }
+          sampling();
+      }
+  }
+
+  // import { ErrorTarget, RouteHistory, HttpData } from '@chuche-monitor/types';
+  var HandleEvents = {
+      // 处理xhr、fetch回调
+      // handleHttp(data: HttpData, type: EVENTTYPES): void {
+      //   const result = httpTransform(data);
+      //   // 添加用户行为，去掉自身上报的接口行为
+      //   if (!data.url.includes(options.dsn)) {
+      //     breadcrumb.push({
+      //       type,
+      //       category: breadcrumb.getCategory(type),
+      //       data: result,
+      //       status: result.status,
+      //       time: data.time,
+      //     });
+      //   }
+      //   if (result.status === 'error') {
+      //     // 上报接口错误
+      //     transportData.send({ ...result, type, status: STATUS_CODE.ERROR });
+      //   }
+      // },
+      // handleError(ev: ErrorTarget): void {
+      //   const target = ev.target;
+      //   if (!target || (ev.target && !ev.target.localName)) {
+      //     // vue和react捕获的报错使用ev解析，异步错误使用ev.error解析
+      //     const stackFrame = ErrorStackParser.parse(!target ? ev : ev.error)[0];
+      //     const { fileName, columnNumber, lineNumber } = stackFrame;
+      //     const errorData = {
+      //       type: EVENTTYPES.ERROR,
+      //       status: STATUS_CODE.ERROR,
+      //       time: getTimestamp(),
+      //       message: ev.message,
+      //       fileName,
+      //       line: lineNumber,
+      //       column: columnNumber,
+      //     };
+      //     breadcrumb.push({
+      //       type: EVENTTYPES.ERROR,
+      //       category: breadcrumb.getCategory(EVENTTYPES.ERROR),
+      //       data: errorData,
+      //       time: getTimestamp(),
+      //       status: STATUS_CODE.ERROR,
+      //     });
+      //     const hash: string = getErrorUid(
+      //       `${EVENTTYPES.ERROR}-${ev.message}-${fileName}-${columnNumber}`
+      //     );
+      //     // 开启repeatCodeError第一次报错才上报
+      //     if (!options.repeatCodeError || (options.repeatCodeError && !hashMapExist(hash))) {
+      //       return transportData.send(errorData);
+      //     }
+      //   }
+      //   // 资源加载报错
+      //   if (target?.localName) {
+      //     // 提取资源加载的信息
+      //     const data = resourceTransform(target);
+      //     breadcrumb.push({
+      //       type: EVENTTYPES.RESOURCE,
+      //       category: breadcrumb.getCategory(EVENTTYPES.RESOURCE),
+      //       status: STATUS_CODE.ERROR,
+      //       time: getTimestamp(),
+      //       data,
+      //     });
+      //     return transportData.send({
+      //       ...data,
+      //       type: EVENTTYPES.RESOURCE,
+      //       status: STATUS_CODE.ERROR,
+      //     });
+      //   }
+      // },
+      // handleHistory(data: RouteHistory): void {
+      //   const { from, to } = data;
+      //   // 定义parsedFrom变量，值为relative
+      //   const { relative: parsedFrom } = parseUrlToObj(from);
+      //   const { relative: parsedTo } = parseUrlToObj(to);
+      //   breadcrumb.push({
+      //     type: EVENTTYPES.HISTORY,
+      //     category: breadcrumb.getCategory(EVENTTYPES.HISTORY),
+      //     data: {
+      //       from: parsedFrom ? parsedFrom : '/',
+      //       to: parsedTo ? parsedTo : '/',
+      //     },
+      //     time: getTimestamp(),
+      //     status: STATUS_CODE.OK,
+      //   });
+      // },
+      // handleHashchange(data: HashChangeEvent): void {
+      //   const { oldURL, newURL } = data;
+      //   const { relative: from } = parseUrlToObj(oldURL);
+      //   const { relative: to } = parseUrlToObj(newURL);
+      //   breadcrumb.push({
+      //     type: EVENTTYPES.HASHCHANGE,
+      //     category: breadcrumb.getCategory(EVENTTYPES.HASHCHANGE),
+      //     data: {
+      //       from,
+      //       to,
+      //     },
+      //     time: getTimestamp(),
+      //     status: STATUS_CODE.OK,
+      //   });
+      // },
+      // handleUnhandleRejection(ev: PromiseRejectionEvent): void {
+      //   const stackFrame = ErrorStackParser.parse(ev.reason)[0];
+      //   const { fileName, columnNumber, lineNumber } = stackFrame;
+      //   const message = unknownToString(ev.reason.message || ev.reason.stack);
+      //   const data = {
+      //     type: EVENTTYPES.UNHANDLEDREJECTION,
+      //     status: STATUS_CODE.ERROR,
+      //     time: getTimestamp(),
+      //     message,
+      //     fileName,
+      //     line: lineNumber,
+      //     column: columnNumber,
+      //   };
+      //   breadcrumb.push({
+      //     type: EVENTTYPES.UNHANDLEDREJECTION,
+      //     category: breadcrumb.getCategory(EVENTTYPES.UNHANDLEDREJECTION),
+      //     time: getTimestamp(),
+      //     status: STATUS_CODE.ERROR,
+      //     data,
+      //   });
+      //   const hash: string = getErrorUid(
+      //     `${EVENTTYPES.UNHANDLEDREJECTION}-${message}-${fileName}-${columnNumber}`
+      //   );
+      //   // 开启repeatCodeError第一次报错才上报
+      //   if (!options.repeatCodeError || (options.repeatCodeError && !hashMapExist(hash))) {
+      //     transportData.send(data);
+      //   }
+      // },
+      handleWhiteScreen: function () {
+          openWhiteScreen(function (res) {
+              // 上报白屏检测信息
+              console.log("上报白屏异常信息");
+              console.log(res);
+              transportData.send(__assign({ type: EVENTTYPES.WHITESCREEN, time: getTimestamp() }, res));
+          }, options);
+      },
+  };
+
+  function replace(type) {
+      switch (type) {
+          case EVENTTYPES.WHITESCREEN:
+              whiteScreen();
+              break;
+      }
+  }
+  function addReplaceHandler(handler) {
+      if (!subscribeEvent(handler))
+          return;
+      replace(handler.type);
+  }
+  function whiteScreen() {
+      notify(EVENTTYPES.WHITESCREEN);
+  }
+
+  function setupReplace() {
+      // 白屏检测
+      addReplaceHandler({
+          callback: function () {
+              HandleEvents.handleWhiteScreen();
+          },
+          type: EVENTTYPES.WHITESCREEN,
+      });
+  }
+
   function init(options) {
       if (!options.dsn || !options.apikey) {
           return console.error("web-see \u7F3A\u5C11\u5FC5\u987B\u914D\u7F6E\u9879\uFF1A".concat(!options.dsn ? 'dsn' : 'apikey', " "));
@@ -562,7 +847,7 @@
       // if (!('fetch' in _global) || options.disabled) return;
       // 初始化配置
       handleOptions(options);
-      // setupReplace();
+      setupReplace();
   }
   function install(Vue, options) {
       if (getFlag(EVENTTYPES.VUE))

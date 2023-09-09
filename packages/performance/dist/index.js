@@ -94,6 +94,89 @@
         var observer = new PerformanceObserver(entryHandler);
         observer.observe({ type: 'paint', buffered: true });
     }
+    function getLCP(callback) {
+        var entryHandler = function (list) {
+            for (var _i = 0, _a = list.getEntries(); _i < _a.length; _i++) {
+                var entry = _a[_i];
+                observer.disconnect();
+                callback({
+                    name: 'LCP',
+                    value: entry.startTime,
+                    rating: entry.startTime > 2500 ? 'poor' : 'good',
+                });
+            }
+        };
+        var observer = new PerformanceObserver(entryHandler);
+        observer.observe({ type: 'largest-contentful-paint', buffered: true });
+    }
+    function getFP(callback) {
+        var entryHandler = function (list) {
+            for (var _i = 0, _a = list.getEntries(); _i < _a.length; _i++) {
+                var entry = _a[_i];
+                if (entry.name === 'first-paint') {
+                    observer.disconnect();
+                    callback({
+                        name: 'FP',
+                        value: entry.startTime,
+                        rating: entry.startTime > 2500 ? 'poor' : 'good',
+                    });
+                }
+            }
+        };
+        var observer = new PerformanceObserver(entryHandler);
+        observer.observe({ type: 'paint', buffered: true });
+    }
+    function getOtherData(callback) {
+        var entryHandler = function (entryList) {
+            var entry = entryList.getEntries()[0];
+            callback({
+                name: 'domReady',
+                value: entry.domContentLoadedEventEnd - entry.fetchStart,
+                rating: (entry.domContentLoadedEventEnd - entry.fetchStart) > 2500 ? 'poor' : 'good',
+            });
+            callback({
+                name: 'dnsTime',
+                value: entry.domainLookupEnd - entry.domainLookupStart,
+                rating: (entry.domContentLoadedEventEnd - entry.fetchStart) > 2500 ? 'poor' : 'good',
+            });
+            callback({
+                name: 'response',
+                value: entry.responseEnd - entry.responseStart,
+                rating: (entry.responseEnd - entry.responseStart) > 2500 ? 'poor' : 'good',
+            });
+            callback({
+                name: 'resources',
+                value: entry.domComplete - entry.domContentLoadedEventEnd,
+                rating: (entry.domComplete - entry.domContentLoadedEventEnd) > 2500 ? 'poor' : 'good',
+            });
+            callback({
+                name: 'firstPackage',
+                value: entry.responseStart - entry.domainLookupStart,
+                rating: (entry.responseStart - entry.domainLookupStart) > 2500 ? 'poor' : 'good',
+            });
+            callback({
+                name: 'pageFull',
+                value: entry.loadEventStart - entry.fetchStart,
+                rating: (entry.loadEventStart - entry.fetchStart) > 2500 ? 'poor' : 'good',
+            });
+        };
+        var observer = new PerformanceObserver(entryHandler);
+        observer.observe({ type: 'navigation' });
+    }
+    function getPerformanceData(callback) {
+        getFCP(function (res) {
+            callback(res);
+        });
+        getLCP(function (res) {
+            callback(res);
+        });
+        getFP(function (res) {
+            callback(res);
+        });
+        getOtherData(function (res) {
+            callback(res);
+        });
+    }
 
     // 获取当前的时间戳
     function getTimestamp() {
@@ -126,10 +209,10 @@
             var transportData = _a.transportData;
             console.log("运行了性能插件");
             // 获取FCP、LCP、TTFB、FID等指标
-            getFCP(function (res) {
-                // name指标名称、rating 评级、value数值
+            getPerformanceData(function (res) {
                 var name = res.name, rating = res.rating, value = res.value;
-                console.log("FCP数据的获取");
+                console.log(name, value);
+                // 将获取的性能数据上报
                 transportData.send({
                     type: EVENTTYPES.PERFORMANCE,
                     status: STATUS_CODE.OK,

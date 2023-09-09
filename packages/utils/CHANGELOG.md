@@ -1,6 +1,6 @@
-# @chuche-monitor/core
+# @chuche-monitor/utils
 
-## 1.2.0
+## 1.1.0
 
 ### Minor Changes
 
@@ -11,9 +11,8 @@
 - Updated dependencies
   - @chuche-monitor/common@1.1.0
   - @chuche-monitor/types@1.1.0
-  - @chuche-monitor/utils@1.1.0
 
-## 1.1.2
+## 1.0.2
 
 ### Patch Changes
 
@@ -21,9 +20,8 @@
 - Updated dependencies
   - @chuche-monitor/common@1.0.2
   - @chuche-monitor/types@1.0.2
-  - @chuche-monitor/utils@1.0.2
 
-## 1.1.1
+## 1.0.1
 
 ### Patch Changes
 
@@ -31,10 +29,3 @@
 - Updated dependencies
   - @chuche-monitor/common@1.0.1
   - @chuche-monitor/types@1.0.1
-  - @chuche-monitor/utils@1.0.1
-
-## 1.1.0
-
-### Minor Changes
-
-- 1.1.0

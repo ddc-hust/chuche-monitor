@@ -35,7 +35,7 @@
     })(exports.STATUS_CODE || (exports.STATUS_CODE = {}));
 
     var name = "@chuche-monitor/core";
-    var version = "1.1.0";
+    var version = "1.1.2";
     var description = "";
     var main = "src/index.js";
     var publishConfig = {
